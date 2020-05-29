@@ -1,0 +1,230 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform:
+- AWS::Serverless-2016-10-31
+
+Description: 'sam-app Sample SAM Template for sam-app
+
+  '
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: Zendesk Event Bridge integration
+    Description: This application analyses Zendesk tickets for negative sentiment,
+      tags them as 'negative' and applies a customizable escalation time frame.
+    Author: Benjamin Smith
+    SpdxLicenseId: MIT-0
+    LicenseUrl: s3://aws-codestar-eu-west-1-981723798357-demo-eventbridg-pipe/1f06e96ef0edec9acb03a4893be2a1df
+    ReadmeUrl: s3://aws-codestar-eu-west-1-981723798357-demo-eventbridg-pipe/18095b689ed9a4eecb0695dc27dc3da6
+    Labels:
+    - zendesk
+    - moderation
+    - sentiment
+    - lambda
+    - event Bridge
+    - step functions
+    HomePageUrl: https://github.com/bls20AWS/severless-ticket-sentiment-analysys-and-automated-escalation
+    SemanticVersion: 1.0.0
+    SourceCodeUrl: https://github.com/bls20AWS/severless-ticket-sentiment-analysys-and-automated-escalation/tree/1.0.0
+Parameters:
+  ProjectId:
+    Type: String
+    Description: AWS CodeStar projectID used to associate new resources to team members
+  CodeDeployRole:
+    Type: String
+    Description: IAM role to allow AWS CodeDeploy to manage deployment of AWS Lambda
+      functions
+  Stage:
+    Type: String
+    Description: The name for a project pipeline stage, such as Staging or Prod, for
+      which resources are provisioned and deployed.
+    Default: ''
+  ZenDeskUsernameKey:
+    Description: Your agent username that will connect to the Zedesk API
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: ZenDeskUsername
+  ZenDeskTokenKey:
+    Description: Your API Token
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: ZenDeskToken
+  ZenDeskDomainKey:
+    Description: Your Unique Zendesk Domain name (excluding https:// and .com)
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: ZenDeskDomain
+  SLAUrgentWait:
+    Description: Urgent priority SLA wait time
+    Type: String
+    Default: 120
+  SLAHighWait:
+    Description: High priority SLA wait time
+    Type: String
+    Default: 120
+  SLANormalWait:
+    Description: Normal priority SLA wait time
+    Type: String
+    Default: 120
+Globals:
+  Function:
+    AutoPublishAlias: live
+    DeploymentPreference:
+      Enabled: true
+      Type: Canary10Percent5Minutes
+      Role:
+        Ref: CodeDeployRole
+Resources:
+  ZenDeskDemoGetFullTicket:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://aws-codestar-eu-west-1-981723798357-demo-eventbridg-pipe/c6980ae15db02123e2425e739b464803
+      Handler: lambdas/getFullTicket.handler
+      Runtime: nodejs10.x
+      Role:
+        Fn::GetAtt:
+        - MyLambdaExecutionRole
+        - Arn
+      Environment:
+        Variables:
+          ZenDeskUsername:
+            Ref: ZenDeskUsernameKey
+          ZenDeskPassword:
+            Ref: ZenDeskTokenKey
+          ZenDeskDomain:
+            Ref: ZenDeskDomainKey
+  ZenDeskDemoGetSentiment:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://aws-codestar-eu-west-1-981723798357-demo-eventbridg-pipe/c6980ae15db02123e2425e739b464803
+      Handler: lambdas/getSentiment.handler
+      Runtime: nodejs10.x
+      Role:
+        Fn::GetAtt:
+        - MyLambdaExecutionRole
+        - Arn
+      Environment: null
+  ZenDeskDemoSetTags:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://aws-codestar-eu-west-1-981723798357-demo-eventbridg-pipe/c6980ae15db02123e2425e739b464803
+      Handler: lambdas/setTags.handler
+      Runtime: nodejs10.x
+      Role:
+        Fn::GetAtt:
+        - MyLambdaExecutionRole
+        - Arn
+      Environment:
+        Variables:
+          ZenDeskUsername:
+            Ref: ZenDeskUsernameKey
+          ZenDeskPassword:
+            Ref: ZenDeskTokenKey
+          ZenDeskDomain:
+            Ref: ZenDeskDomainKey
+  ZenDeskDemoSetPriority:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://aws-codestar-eu-west-1-981723798357-demo-eventbridg-pipe/c6980ae15db02123e2425e739b464803
+      Handler: lambdas/setPriority.handler
+      Runtime: nodejs10.x
+      Role:
+        Fn::GetAtt:
+        - MyLambdaExecutionRole
+        - Arn
+      Environment:
+        Variables:
+          ZenDeskUsername:
+            Ref: ZenDeskUsernameKey
+          ZenDeskPassword:
+            Ref: ZenDeskTokenKey
+          ZenDeskDomain:
+            Ref: ZenDeskDomainKey
+  ZendDemoStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+        Fn::Sub: "{\n   \"Comment\": \"Understand the ticket sentiment, apply tags\
+          \ and check back when answered to ensure SLA's are met\",\n   \"StartAt\"\
+          : \"GetSentiment\",\n   \"States\": {\n     \"GetSentiment\": {\n      \
+          \ \"Type\": \"Task\",\n       \"Resource\": \"${ZenDeskDemoGetSentiment.Arn}\"\
+          ,\n       \"InputPath\": \"$.detail.ticket_event.ticket.raw_subject\",\n\
+          \       \"ResultPath\": \"$.detail.ticket_event.ticket.sentiment\",\n  \
+          \     \"OutputPath\": \"$.detail.ticket_event.ticket\",\n       \"Next\"\
+          : \"isNegative\"\n     },\n     \"isNegative\": {\n       \"Type\" : \"\
+          Choice\",\n       \"Choices\": [\n         {\n           \"Variable\": \"\
+          $.sentiment.Sentiment\",\n           \"StringEquals\": \"NEGATIVE\",\n \
+          \          \"Next\": \"FullTicketInfo\"\n         }\n       ],\n       \"\
+          Default\": \"ClosedOrNotNegative\"\n     },\n     \n     \"FullTicketInfo\"\
+          : {\n       \"Type\" : \"Task\",\n       \"Resource\": \"${ZenDeskDemoGetFullTicket.Arn}\"\
+          ,\n       \"InputPath\":  \"$\",\n       \"ResultPath\": \"$\",\n      \
+          \ \"Next\": \"setTags\"\n     },\n \n     \"setTags\": {\n       \"Type\"\
+          \ : \"Task\",\n       \"Resource\": \"${ZenDeskDemoSetTags.Arn}\",\n   \
+          \    \"ResultPath\": \"$.event.detail.ticket_event.ticket\",\n       \"\
+          Next\": \"isClosed\"\n     },\n     \n     \n  \"GetSLAWaitTime\": {\n \
+          \      \"Type\" : \"Choice\",\n       \"Choices\": [\n         {\n     \
+          \      \"Variable\": \"$.priority\",\n           \"StringEquals\": \"normal\"\
+          ,\n           \"Next\": \"SLAHighWait\"\n         },\n         {\n     \
+          \      \"Variable\": \"$.priority\",\n           \"StringEquals\": \"high\"\
+          ,\n           \"Next\": \"SLAUrgentWait\"\n         },\n         {\n   \
+          \        \"Variable\": \"$.priority\",\n           \"StringEquals\": \"\
+          urgent\",\n           \"Next\": \"FinalEscalationState\"\n         }\n \
+          \      ],\n        \"Default\": \"SLANormalWait\"\n        \n     },\n \
+          \    \n     \n    \"FinalEscalationState\": {\n            \"Comment\" :\
+          \ \"Ticket cannot be escalated further\",\n            \"Type\": \"Succeed\"\
+          \n        },\n     \n     \"EscalatePriority\": {\n         \"Type\" : \"\
+          Task\",\n         \"Resource\": \"${ZenDeskDemoSetPriority.Arn}\",\n   \
+          \      \"InputPath\":  \"$\",\n         \"ResultPath\": \"$\",\n       \
+          \  \"Next\": \"isClosed\"\n     },\n\n     \"SLANormalWait\": {\n      \
+          \   \"Type\": \"Wait\",\n         \"Seconds\": ${SLANormalWait},\n     \
+          \    \"Next\": \"EscalatePriority\"\n       },\n       \n       \"SLAHighWait\"\
+          : {\n         \"Type\": \"Wait\",\n         \"Seconds\": ${SLAHighWait},\n\
+          \         \"Next\": \"EscalatePriority\"\n       },\n       \n       \n\
+          \       \"SLAUrgentWait\": {\n         \"Type\": \"Wait\",\n         \"\
+          Seconds\":${SLAUrgentWait},\n         \"Next\": \"EscalatePriority\"\n \
+          \      },\n\n     \"isClosed\": {\n       \"Type\" : \"Choice\",\n     \
+          \  \"Choices\": [\n         {\n           \"Variable\": \"$.status\",\n\
+          \           \"StringEquals\": \"open\",\n           \"Next\": \"GetSLAWaitTime\"\
+          \n         }\n       ],\n       \"Default\": \"ClosedOrNotNegative\"\n \
+          \    },\n    \n     \"ClosedOrNotNegative\": {\n         \"Type\": \"Pass\"\
+          ,\n         \"Result\": {\n           \"x-datum\": 1,\n           \"y-datum\"\
+          : 1\n         },\n         \"ResultPath\": \"$.coords\",\n         \"End\"\
+          : true\n       }\n                           \n   }\n }\n"
+      RoleArn:
+        Fn::GetAtt:
+        - MyStatesExecutionRole
+        - Arn
+  MyLambdaExecutionRole:
+    Description: Creating service role in IAM for AWS Lambda
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: CodeStar-${ProjectId}-Execution${Stage}
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+      - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/ComprehendFullAccess
+  MyStatesExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - Fn::Sub: states.${AWS::Region}.amazonaws.com
+          Action: sts:AssumeRole
+      Path: /
+      Policies:
+      - PolicyName: StatesExecutionPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - lambda:InvokeFunction
+            - comprehend:DetectSentiment
+            Resource: '*'
