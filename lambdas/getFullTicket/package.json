@@ -2,7 +2,7 @@
   "name": "ZendApplication",
   "version": "1.0.0",
   "description": "ZendApplicationfor NodeJS",
-  "repository": "https://github.com/bls20AWS/severless-ticket-sentiment-analysys-and-automated-esculation",
+  "repository": "https://github.com/aws-samples/severless-ticket-sentiment-analysis-and-automated-escalation",
   "author": "SAM CLI",
   "license": "MIT",
   "dependencies": {
@@ -11,6 +11,6 @@
   "scripts": {},
   "devDependencies": {
     "chai": "^4.2.0",
-    "mocha": "^6.1.4"
+    "mocha": "^6.2.3"
   }
 }

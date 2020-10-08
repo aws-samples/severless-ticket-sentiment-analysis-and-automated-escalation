@@ -11,6 +11,6 @@
   "scripts": {},
   "devDependencies": {
     "chai": "^4.2.0",
-    "mocha": "^6.1.4"
+    "mocha": "^6.2.3"
   }
 }
