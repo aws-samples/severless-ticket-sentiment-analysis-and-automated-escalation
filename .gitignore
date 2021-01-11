@@ -1,11 +1,12 @@
 .DS_Store
 node_modules/
+getFullTicket/node_modules/
+getSentiment/node_modules/
+setPriority/node_modules/
+setTags/node_modules/
 /dist
-backend/node_modules
-backend/Lambda/node_modules
+package.yml
 #sam
-backend/FreshTracks/samconfig.toml
-
 
 # local env files
 .env.local

@@ -1,35 +1,34 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: 
 - AWS::Serverless-2016-10-31
-- AWS::CodeStar
 Description: >
   sam-app
   Sample SAM Template for sam-app
   
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: Zendesk Event Bridge integration
+    Name: Automated-Support-Ticket-Moderator
     Description: This application analyses Zendesk tickets for negative sentiment, tags them as 'negative' and applies a customizable escalation time frame.
     Author: Benjamin Smith
     SpdxLicenseId: MIT-0
     LicenseUrl: LICENSE
     ReadmeUrl: README.md
     Labels: ['zendesk', 'moderation', 'sentiment', 'lambda','event Bridge','step functions']
-    HomePageUrl: https://github.com/bls20AWS/severless-ticket-sentiment-analysys-and-automated-escalation
-    SemanticVersion: 1.0.0
-    SourceCodeUrl: https://github.com/bls20AWS/severless-ticket-sentiment-analysys-and-automated-escalation/tree/1.0.0
+    HomePageUrl: https://github.com/aws-samples/severless-ticket-sentiment-analysys-and-automated-escalation
+    SemanticVersion: 1.0.1
+    SourceCodeUrl: https://github.com/aws-samples/severless-ticket-sentiment-analysys-and-automated-escalation/tree/1.0.0
 
   
 ##########################################################################
 #  Code Star Params                                                      #
 ##########################################################################
 Parameters:
-  ProjectId:
-    Type: String
-    Description: AWS CodeStar projectID used to associate new resources to team members
-  CodeDeployRole:
-    Type: String
-    Description: IAM role to allow AWS CodeDeploy to manage deployment of AWS Lambda functions
+#   ProjectId:
+#     Type: String
+#     Description: AWS CodeStar projectID used to associate new resources to team members
+#   CodeDeployRole:
+#     Type: String
+#     Description: IAM role to allow AWS CodeDeploy to manage deployment of AWS Lambda functions
   Stage:
     Type: String
     Description: The name for a project pipeline stage, such as Staging or Prod, for which resources are provisioned and deployed.
@@ -39,15 +38,15 @@ Parameters:
 ########################################################################## 
   ZenDeskUsernameKey:
     Description: Your agent username that will connect to the Zedesk API
-    Type: AWS::SSM::Parameter::Value<String>
+    Type: String
     Default: ZenDeskUsername
   ZenDeskTokenKey:
     Description: Your API Token
-    Type: AWS::SSM::Parameter::Value<String>
+    Type: String
     Default: ZenDeskToken
   ZenDeskDomainKey:
     Description: Your Unique Zendesk Domain name (excluding https:// and .com)
-    Type: AWS::SSM::Parameter::Value<String>
+    Type: String
     Default: ZenDeskDomain
 ##########################################################################
 #  Lambda Environment Params : Escalation times                          #
@@ -77,11 +76,6 @@ Parameters:
 Globals:
   Function:
     AutoPublishAlias: live
-    DeploymentPreference:
-      Enabled: true
-      Type: Canary10Percent5Minutes
-      Role: !Ref CodeDeployRole
-
 Resources:
 ##########################################################################
 #  Lambda Functions                                                      #
@@ -94,7 +88,7 @@ Resources:
             Runtime: nodejs10.x
             Role:
                 Fn::GetAtt:
-                -DemoLambdaExecutionRole
+                - DemoLambdaExecutionRole
                 - Arn
             Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
                 Variables:
@@ -177,7 +171,7 @@ Resources:
                          {
                            "Variable": "$.sentiment.Sentiment",
                            "StringEquals": "NEGATIVE",
-                           "Next": "FullTicketInfo"
+                           "Next": "setTags"
                          }
                        ],
                        "Default": "ClosedOrNotNegative"
@@ -284,7 +278,7 @@ Resources:
         Description: Creating service role in IAM for AWS Lambda
         Type: AWS::IAM::Role
         Properties:
-          RoleName: !Sub 'CodeStar-${ProjectId}-Execution${Stage}'
+          RoleName: !Sub 'CodeStar-Execution${Stage}'
           AssumeRolePolicyDocument:
             Statement:
             - Effect: Allow
@@ -320,11 +314,6 @@ Resources:
 ##########################################################################
 #   EVENT  BRIDGE                                                        #
 ##########################################################################
-    ZendeskEventBus:
-      Type: 'AWS::Events::EventBus'
-      Properties:
-        EventSourceName: !Ref EventSourceName
-        Name: !Ref EventSourceName
     MyEventsRule:
       Type: 'AWS::Events::Rule'
       Properties:
@@ -334,16 +323,18 @@ Resources:
           account:
             - !Ref "AWS::AccountId"
           detail-type:
-            - 'Support Ticket: Ticket Created'
+            - 'Support Ticket: Comment Created'
         Targets:
-          - Arn: >-
-              !Ref ZendDemoStateMachine
-            RoleArn: >-
+          - 
+            Arn: 
+              Fn::GetAtt: 
+              - ZendDemoStateMachine
+              - Arn
+            RoleArn:
               Fn::GetAtt:
                 - DemoStatesExecutionRole
                 - Arn
             Id: NewTicketSFN
       DependsOn:
-        - ZendeskEventBus
         - ZendDemoStateMachine
         - DemoStatesExecutionRole

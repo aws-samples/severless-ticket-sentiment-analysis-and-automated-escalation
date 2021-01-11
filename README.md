@@ -100,7 +100,7 @@ Once set up is complete, create a ticket in Zendesk and see it's tag and priorit
                 "{YourAWSAccountNumber}"
             ],
             "detail-type": [
-                "Support Ticket: Ticket Created"
+                "Support Ticket: Comment Created"
             ]
         }
         ```
