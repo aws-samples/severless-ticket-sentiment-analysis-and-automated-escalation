@@ -64,7 +64,7 @@ Important: this application uses various AWS services and there are costs associ
 *   `ZenDeskUsernameKey`: Your Zendesk agent username that will connect to the Zedesk API
 *   `ZenDeskTokenKey`: Your Zendesk API Token
 *   `ZenDeskDomainKey`: Your Unique Zendesk Domain name (excluding https:// and .com)
-for instructions on where to find these go to [Integrating Zendesk with Event Bridge](/severless-ticket-sentiment-analysys-and-automated-escalation#integrating-zeddesk-with-event-bridge)
+for instructions on where to find these go to [Integrating Zendesk with Event Bridge](https://github.com/aws-samples/severless-ticket-sentiment-analysis-and-automated-escalation#integrating-zeddesk-with-event-bridge)
 
 ## How it works
 
