@@ -94,7 +94,7 @@ Resources:
             Runtime: nodejs10.x
             Role:
                 Fn::GetAtt:
-                - MyLambdaExecutionRole
+                -DemoLambdaExecutionRole
                 - Arn
             Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
                 Variables:
@@ -109,7 +109,7 @@ Resources:
             Runtime: nodejs10.x
             Role:
                 Fn::GetAtt:
-                - MyLambdaExecutionRole
+                - DemoLambdaExecutionRole
                 - Arn
             Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
     ZenDeskDemoSetTags:
@@ -120,7 +120,7 @@ Resources:
             Runtime: nodejs10.x
             Role:
                 Fn::GetAtt:
-                - MyLambdaExecutionRole
+                - DemoLambdaExecutionRole
                 - Arn
             Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
                 Variables:
@@ -135,7 +135,7 @@ Resources:
             Runtime: nodejs10.x
             Role:
                 Fn::GetAtt:
-                - MyLambdaExecutionRole
+                - DemoLambdaExecutionRole
                 - Arn
             Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
                 Variables:
@@ -274,13 +274,13 @@ Resources:
                                            
                    }
                  }
-        RoleArn: !GetAtt [ MyStatesExecutionRole, Arn ]
+        RoleArn: !GetAtt [ DemoStatesExecutionRole, Arn ]
         
 ##########################################################################
 #   Roles                                                                #
 ##########################################################################   
 
-    MyLambdaExecutionRole:
+    DemoLambdaExecutionRole:
         Description: Creating service role in IAM for AWS Lambda
         Type: AWS::IAM::Role
         Properties:
@@ -295,7 +295,7 @@ Resources:
           ManagedPolicyArns:
             - !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
             - !Sub 'arn:${AWS::Partition}:iam::aws:policy/ComprehendFullAccess'
-    MyStatesExecutionRole:
+    DemoStatesExecutionRole:
         Type: "AWS::IAM::Role"
         Properties:
           AssumeRolePolicyDocument:
@@ -340,10 +340,10 @@ Resources:
               !Ref ZendDemoStateMachine
             RoleArn: >-
               Fn::GetAtt:
-                - MyStatesExecutionRole
+                - DemoStatesExecutionRole
                 - Arn
             Id: NewTicketSFN
       DependsOn:
         - ZendeskEventBus
         - ZendDemoStateMachine
-        - MyStatesExecutionRole
+        - DemoStatesExecutionRole
