@@ -85,7 +85,7 @@ Resources:
         Properties:
             CodeUri: lambdas/getFullTicket
             Handler: getFullTicket.handler
-            Runtime: nodejs10.x
+            Runtime: nodejs14.x
             Role:
                 Fn::GetAtt:
                 - DemoLambdaExecutionRole
@@ -100,7 +100,7 @@ Resources:
         Properties:
             CodeUri: lambdas/getSentiment
             Handler: getSentiment.handler
-            Runtime: nodejs10.x
+            Runtime: nodejs14.x
             Role:
                 Fn::GetAtt:
                 - DemoLambdaExecutionRole
@@ -111,7 +111,7 @@ Resources:
         Properties:
             CodeUri: lambdas/setTags
             Handler: setTags.handler
-            Runtime: nodejs10.x
+            Runtime: nodejs14.x
             Role:
                 Fn::GetAtt:
                 - DemoLambdaExecutionRole
@@ -126,7 +126,7 @@ Resources:
         Properties:
             CodeUri: lambdas/setPriority
             Handler: setPriority.handler
-            Runtime: nodejs10.x
+            Runtime: nodejs14.x
             Role:
                 Fn::GetAtt:
                 - DemoLambdaExecutionRole

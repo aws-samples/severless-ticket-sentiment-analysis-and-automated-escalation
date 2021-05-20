@@ -66,7 +66,7 @@ Resources:
     Properties:
       CodeUri: s3://severless-ticket-sentiment-analysis-and-automated-escalation/29a5110383ba75c318738b375cdae561
       Handler: getFullTicket.handler
-      Runtime: nodejs10.x
+      Runtime: nodejs14.x
       Role:
         Fn::GetAtt:
         - DemoLambdaExecutionRole
@@ -84,7 +84,7 @@ Resources:
     Properties:
       CodeUri: s3://severless-ticket-sentiment-analysis-and-automated-escalation/6031eaec5573fb2adaa96645627435c9
       Handler: getSentiment.handler
-      Runtime: nodejs10.x
+      Runtime: nodejs14.x
       Role:
         Fn::GetAtt:
         - DemoLambdaExecutionRole
@@ -95,7 +95,7 @@ Resources:
     Properties:
       CodeUri: s3://severless-ticket-sentiment-analysis-and-automated-escalation/1989be8a590b85764342e96fae93d49a
       Handler: setTags.handler
-      Runtime: nodejs10.x
+      Runtime: nodejs14.x
       Role:
         Fn::GetAtt:
         - DemoLambdaExecutionRole
@@ -113,7 +113,7 @@ Resources:
     Properties:
       CodeUri: s3://severless-ticket-sentiment-analysis-and-automated-escalation/bbfa7302ac7ad61b71d97afb8adc867e
       Handler: setPriority.handler
-      Runtime: nodejs10.x
+      Runtime: nodejs14.x
       Role:
         Fn::GetAtt:
         - DemoLambdaExecutionRole
