@@ -1,0 +1,120 @@
+ {
+                   "Comment": "Understand the ticket sentiment, apply tags and check back when answered to ensure SLA's are met",
+                   "StartAt": "FullTicketInfo",
+                   "States": {
+                      "FullTicketInfo": {
+                       "Type" : "Task",
+                       "Resource": "${ZenDeskDemoGetFullTicket.Arn}",
+                       "InputPath":  "$.detail.ticket_event.ticket",
+                       "ResultPath": "$",
+                       "Next": "GetSentiment"
+                     },
+                     "GetSentiment": {
+                       "Type": "Task",
+                       "Resource": "${ZenDeskDemoGetSentiment.Arn}",
+                       "InputPath": "$.raw_subject",
+                       "ResultPath": "$.sentiment",
+                       "OutputPath": "$",
+                       "Next": "isNegative"
+                     },
+                     "isNegative": {
+                       "Type" : "Choice",
+                       "Choices": [
+                         {
+                           "Variable": "$.sentiment.Sentiment",
+                           "StringEquals": "NEGATIVE",
+                           "Next": "setTags"
+                         }
+                       ],
+                       "Default": "ClosedOrNotNegative"
+                     },
+                     
+                    
+                 
+                     "setTags": {
+                       "Type" : "Task",
+                       "Resource": "${ZenDeskDemoSetTags.Arn}",
+                       "ResultPath": "$.tags",
+                       "OutputPath": "$",
+                       "Next": "isClosed"
+                     },
+                     
+                     
+                  "GetSLAWaitTime": {
+                       "Type" : "Choice",
+                       "Choices": [
+                         {
+                           "Variable": "$.priority",
+                           "StringEquals": "normal",
+                           "Next": "SLAHighWait"
+                         },
+                         {
+                           "Variable": "$.priority",
+                           "StringEquals": "high",
+                           "Next": "SLAUrgentWait"
+                         },
+                         {
+                           "Variable": "$.priority",
+                           "StringEquals": "urgent",
+                           "Next": "FinalEscalationState"
+                         }
+                       ],
+                        "Default": "SLANormalWait"
+                        
+                     },
+                     
+                     
+                    "FinalEscalationState": {
+                            "Comment" : "Ticket cannot be escalated further",
+                            "Type": "Succeed"
+                        },
+                     
+                     "EscalatePriority": {
+                         "Type" : "Task",
+                         "Resource": "${ZenDeskDemoSetPriority.Arn}",
+                         "InputPath":  "$",
+                         "ResultPath": "$",
+                         "Next": "isClosed"
+                     },
+                     "SLANormalWait": {
+                         "Type": "Wait",
+                         "Seconds": ${SLANormalWait},
+                         "Next": "EscalatePriority"
+                       },
+                       
+                       "SLAHighWait": {
+                         "Type": "Wait",
+                         "Seconds": ${SLAHighWait},
+                         "Next": "EscalatePriority"
+                       },
+                       
+                       
+                       "SLAUrgentWait": {
+                         "Type": "Wait",
+                         "Seconds":${SLAUrgentWait},
+                         "Next": "EscalatePriority"
+                       },
+                     "isClosed": {
+                       "Type" : "Choice",
+                       "Choices": [
+                         {
+                           "Variable": "$.status",
+                           "StringEquals": "open",
+                           "Next": "GetSLAWaitTime"
+                         }
+                       ],
+                       "Default": "ClosedOrNotNegative"
+                     },
+                    
+                     "ClosedOrNotNegative": {
+                         "Type": "Pass",
+                         "Result": {
+                           "x-datum": 1,
+                           "y-datum": 1
+                         },
+                         "ResultPath": "$.coords",
+                         "End": true
+                       }
+                                           
+                   }
+                 }
