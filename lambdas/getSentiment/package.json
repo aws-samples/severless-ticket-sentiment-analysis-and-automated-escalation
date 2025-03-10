@@ -6,11 +6,11 @@
   "author": "SAM CLI",
   "license": "MIT",
   "dependencies": {
-    "aws-sdk": "^2.504.0"
+    "aws-sdk": "^2.1692.0"
   },
   "scripts": {},
   "devDependencies": {
-    "chai": "^4.2.0",
-    "mocha": "^6.2.3"
+    "chai": "^5.2.0",
+    "mocha": "^11.1.0"
   }
 }

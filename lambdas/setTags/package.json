@@ -6,11 +6,11 @@
   "author": "SAM CLI",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.21.1"
+    "axios": "^1.8.2"
   },
   "scripts": {},
   "devDependencies": {
-    "chai": "^4.2.0",
-    "mocha": "^6.2.3"
+    "chai": "^5.2.0",
+    "mocha": "^11.1.0"
   }
 }
